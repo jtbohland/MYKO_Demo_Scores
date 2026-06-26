@@ -61,7 +61,7 @@ type Props = {
 
 type Phase = "idle" | "demo" | "scoring_gate" | "feedback";
 
-const DEMO_SECONDS = 240; // 4 minutes
+const DEMO_SECONDS = 300; // 5 minutes
 const FEEDBACK_SECONDS = 60; // 1 minute
 
 const ROLES = [
@@ -97,12 +97,19 @@ const COMPLETION_LABELS: Record<number, { label: string; emoji: string }> = {
   4: { label: "Nailed It", emoji: "🟢" },
 };
 
-/** Compute the auto-score for Completion based on how long the demo lasted (in seconds). */
+/**
+ * Compute the auto-score for Completion based on how long the demo lasted.
+ * Rubric (5-min timer = 300s):
+ *   4 — Nailed It:    3:00–4:30 (180s–270s used)
+ *   3 — Solid:        2:30–2:59 (150s–179s) or 4:31–4:59 (271s–299s)
+ *   2 — Getting There: 2:00–2:29 (120s–149s) or 5:00 / buzzer (≥300s)
+ *   1 — Needs Work:   under 2:00 (<120s)
+ */
 function computeCompletionScore(demoUsedSeconds: number): number {
-  if (demoUsedSeconds === 180) return 4; // exactly 3:00 → Nailed It
-  if ((demoUsedSeconds >= 120 && demoUsedSeconds <= 179) || (demoUsedSeconds >= 181 && demoUsedSeconds <= 239)) return 3;
-  if ((demoUsedSeconds >= 90 && demoUsedSeconds <= 119) || demoUsedSeconds >= 240) return 2;
-  return 1; // under 1:30
+  if (demoUsedSeconds >= 180 && demoUsedSeconds <= 270) return 4;
+  if ((demoUsedSeconds >= 150 && demoUsedSeconds <= 179) || (demoUsedSeconds >= 271 && demoUsedSeconds <= 299)) return 3;
+  if ((demoUsedSeconds >= 120 && demoUsedSeconds <= 149) || demoUsedSeconds >= 300) return 2;
+  return 1; // under 2:00
 }
 
 function playBuzzer() {
@@ -483,6 +490,9 @@ export default function ScorecardTab({
               </span>
             ))}
           </div>
+          <p className="text-xs text-slate-400 italic max-w-sm mx-auto leading-snug">
+            Scores and badges are based on standings at time of submission. The Score Board is live — your position may shift as more demos are scored!
+          </p>
 
           <h2 className="text-2xl font-extrabold bg-gradient-to-r from-blue-700 to-indigo-600 bg-clip-text text-transparent">
             {scoredDisplayName}
@@ -519,6 +529,15 @@ export default function ScorecardTab({
           </div>
         </Card>
 
+        {/* Swap roles callout */}
+        <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-2xl p-4 text-center">
+          <p className="text-sm text-amber-900 leading-relaxed">
+            <span className="text-lg">🫵🏼</span>{" "}
+            <strong>Your turn!</strong> If you were the scorer, you&apos;re up next to demo.
+            Swap places with your partner, get set up, and have them score you!
+          </p>
+        </div>
+
         <Button
           onClick={handleReset}
           size="lg"
@@ -526,6 +545,9 @@ export default function ScorecardTab({
         >
           🔄 Score Another Demo
         </Button>
+        <p className="text-center text-xs text-slate-400 leading-snug px-4">
+          In a team of 3? Only one person should score the next presenter — tap above when it&apos;s your turn to be the scorer.
+        </p>
       </div>
     );
   }
@@ -544,8 +566,8 @@ export default function ScorecardTab({
           <h3 className="font-extrabold text-blue-800">Before You Begin</h3>
         </div>
         <p className="text-sm text-slate-500 leading-relaxed">
-          [INSERT SUMMARY — This is a safe space to practice. Give honest, constructive feedback.
-          Focus on what went well and one area to improve. Remember: we&apos;re all here to learn and get better together!]
+          This is a safe space to practice. Give honest, constructive feedback.
+          Focus on what went well and one area to improve. Remember: we&apos;re all here to learn and get better together!
         </p>
       </Card>
 
@@ -616,12 +638,17 @@ export default function ScorecardTab({
                         }}
                         disabled={isScored}
                       >
-                        <span className={`font-medium ${isScored ? "line-through" : ""}`}>
-                          {p.first_name} {p.last_name}
-                        </span>
-                        <span className="text-xs text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">
-                          {isScored ? "✅ Scored" : p.role}
-                        </span>
+                        <div>
+                          <span className={`font-medium ${isScored ? "line-through" : ""}`}>
+                            {p.first_name} {p.last_name}
+                          </span>
+                          <p className="text-xs text-muted-foreground mt-0.5">{p.role}</p>
+                        </div>
+                        {isScored && (
+                          <span className="text-xs text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">
+                            ✅ Scored
+                          </span>
+                        )}
                       </button>
                     );
                   })
@@ -678,8 +705,9 @@ export default function ScorecardTab({
       {/* Timer + Coach Card */}
       {(phase === "demo" || phase === "scoring_gate" || phase === "feedback") && (
         <>
-          {/* Timer Display */}
-          <Card className="p-6 border-0 shadow-lg bg-white rounded-2xl">
+          {/* Timer Display — sticky so it stays visible while scrolling */}
+          <div className="sticky top-0 z-50">
+          <Card className="p-6 border-0 shadow-lg bg-white/95 backdrop-blur-sm rounded-2xl ring-1 ring-blue-200/50">
             {phase === "demo" ? (
               <>
                 <TimerDisplay seconds={demoSeconds} label="⏱️ Demo Time Remaining" totalSeconds={DEMO_SECONDS} />
@@ -729,6 +757,7 @@ export default function ScorecardTab({
               </>
             )}
           </Card>
+          </div>
 
           {/* Submitted Banner */}
           {scoreSubmitted && !feedbackTimerDone && (
@@ -785,6 +814,9 @@ export default function ScorecardTab({
             </div>
             <p className="text-xs text-slate-500 mb-1">
               You&apos;re Scoring: <strong className="text-blue-700">{scoredDisplayName}</strong>
+              {scoredRole && (
+                <span className="text-slate-400 ml-1">· {scoredRole}</span>
+              )}
             </p>
             <p className="text-xs text-slate-400 mb-4 italic">
               1 = Needs Work 🔴 · 2 = Getting There 🟠 · 3 = Solid 🟡 · 4 = Nailed It 🟢
@@ -824,7 +856,7 @@ export default function ScorecardTab({
                       Completion
                       <span className="text-xs font-normal text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded-full">Auto</span>
                     </h4>
-                    <p className="text-xs text-muted-foreground mt-0.5">Did they finish on time? (Target: 3:00)</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Finishes within the expected time window and lands the pitch cleanly before the buzzer.</p>
                   </div>
                   <div className="flex gap-1.5 shrink-0">
                     {[1, 2, 3, 4].map((score) => {
