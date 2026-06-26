@@ -207,7 +207,7 @@ export default function Page1Component() {
   const submitting = submittingScore || submittingManual;
 
   return (
-    <div className="min-h-full flex flex-col overflow-auto bg-background">
+    <div className="min-h-full flex flex-col bg-background">
       <AppHeader
         participantName={`${registeredUser.firstName} ${registeredUser.lastName}`}
         participantRole={registeredUser.role}
