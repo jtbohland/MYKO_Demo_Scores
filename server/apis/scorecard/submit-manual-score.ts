@@ -6,8 +6,9 @@ const ScoreResultSchema = z.object({
   id: z.coerce.number(),
   scorer_name: z.string(),
   scored_participant_id: z.coerce.number(),
-  clarity: z.coerce.number(),
-  conversational_tone: z.coerce.number(),
+  context_score: z.coerce.number(),
+  configuration: z.coerce.number(),
+  consequence: z.coerce.number(),
   credibility: z.coerce.number(),
   close_score: z.coerce.number(),
   completion: z.coerce.number(),
@@ -16,7 +17,7 @@ const ScoreResultSchema = z.object({
 
 export default api({
   name: "SubmitManualScore",
-  description: "Registers an ad-hoc demoer by name/role, then submits their coaching score.",
+  description: "Registers an ad-hoc demoer by name/role, then submits their 6-category coaching score.",
   integrations: {
     db: postgres(APPS_DB),
   },
@@ -24,8 +25,9 @@ export default api({
     scorerName: z.string().min(1),
     manualName: z.string().min(1),
     manualRole: z.string().min(1),
-    clarity: z.number().min(1).max(4),
-    conversationalTone: z.number().min(1).max(4),
+    contextScore: z.number().min(1).max(4),
+    configuration: z.number().min(1).max(4),
+    consequence: z.number().min(1).max(4),
     credibility: z.number().min(1).max(4),
     closeScore: z.number().min(1).max(4),
     completion: z.number().min(1).max(4),
@@ -34,7 +36,7 @@ export default api({
   output: z.object({
     score: ScoreResultSchema,
   }),
-  async run(ctx, { scorerName, manualName, manualRole, clarity, conversationalTone, credibility, closeScore, completion, feedback }) {
+  async run(ctx, { scorerName, manualName, manualRole, contextScore, configuration, consequence, credibility, closeScore, completion, feedback }) {
     // Split name into first/last (best effort)
     const parts = manualName.trim().split(/\s+/);
     const firstName = parts[0] || manualName;
@@ -55,12 +57,12 @@ export default api({
 
     // Submit score
     const rows = await ctx.integrations.db.query(
-      `INSERT INTO scorecard_scores (scorer_name, scored_participant_id, clarity, conversational_tone, credibility, close_score, completion, feedback)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-       RETURNING id, scorer_name, scored_participant_id, clarity, conversational_tone, credibility, close_score, completion, feedback`,
+      `INSERT INTO scorecard_scores (scorer_name, scored_participant_id, context_score, configuration, consequence, credibility, close_score, completion, feedback)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       RETURNING id, scorer_name, scored_participant_id, context_score, configuration, consequence, credibility, close_score, completion, feedback`,
       ScoreResultSchema,
-      [scorerName, participantId, clarity, conversationalTone, credibility, closeScore, completion, feedback],
-      { label: "Insert manual coaching score" }
+      [scorerName, participantId, contextScore, configuration, consequence, credibility, closeScore, completion, feedback],
+      { label: "Insert manual coaching score (6-C)" }
     );
 
     ctx.log.info("Manual score submitted", { scorer: scorerName, demoer: manualName, role: manualRole });

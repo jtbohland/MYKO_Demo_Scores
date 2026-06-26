@@ -120,8 +120,9 @@ export default function Page1Component() {
   const handleSubmitScore = useCallback(
     async (data: {
       scoredParticipantId: number;
-      clarity: number;
-      conversationalTone: number;
+      contextScore: number;
+      configuration: number;
+      consequence: number;
       credibility: number;
       closeScore: number;
       completion: number;
@@ -132,8 +133,9 @@ export default function Page1Component() {
         await submitScore({
           scorerName: scorerFullName,
           scoredParticipantId: data.scoredParticipantId,
-          clarity: data.clarity,
-          conversationalTone: data.conversationalTone,
+          contextScore: data.contextScore,
+          configuration: data.configuration,
+          consequence: data.consequence,
           credibility: data.credibility,
           closeScore: data.closeScore,
           completion: data.completion,
@@ -158,8 +160,9 @@ export default function Page1Component() {
     async (data: {
       manualName: string;
       manualRole: string;
-      clarity: number;
-      conversationalTone: number;
+      contextScore: number;
+      configuration: number;
+      consequence: number;
       credibility: number;
       closeScore: number;
       completion: number;
@@ -171,8 +174,9 @@ export default function Page1Component() {
           scorerName: scorerFullName,
           manualName: data.manualName,
           manualRole: data.manualRole,
-          clarity: data.clarity,
-          conversationalTone: data.conversationalTone,
+          contextScore: data.contextScore,
+          configuration: data.configuration,
+          consequence: data.consequence,
           credibility: data.credibility,
           closeScore: data.closeScore,
           completion: data.completion,

@@ -38,8 +38,9 @@ type Props = {
   leaderboard: LeaderboardEntry[];
   onSubmitScore: (data: {
     scoredParticipantId: number;
-    clarity: number;
-    conversationalTone: number;
+    contextScore: number;
+    configuration: number;
+    consequence: number;
     credibility: number;
     closeScore: number;
     completion: number;
@@ -48,8 +49,9 @@ type Props = {
   onSubmitManualScore: (data: {
     manualName: string;
     manualRole: string;
-    clarity: number;
-    conversationalTone: number;
+    contextScore: number;
+    configuration: number;
+    consequence: number;
     credibility: number;
     closeScore: number;
     completion: number;
@@ -150,8 +152,9 @@ export default function ScorecardTab({
   const [manualRole, setManualRole] = useState("");
   const [demoSeconds, setDemoSeconds] = useState(DEMO_SECONDS);
   const [feedbackSeconds, setFeedbackSeconds] = useState(FEEDBACK_SECONDS);
-  const [clarity, setClarity] = useState<number | null>(null);
-  const [tone, setTone] = useState<number | null>(null);
+  const [contextScore, setContextScore] = useState<number | null>(null);
+  const [configurationScore, setConfigurationScore] = useState<number | null>(null);
+  const [consequenceScore, setConsequenceScore] = useState<number | null>(null);
   const [credibility, setCredibility] = useState<number | null>(null);
   const [closeScore, setCloseScore] = useState<number | null>(null);
   const [completionScore, setCompletionScore] = useState<number | null>(null);
@@ -201,10 +204,10 @@ export default function ScorecardTab({
     ? manualName.trim().length > 0 && manualRole.length > 0
     : selectedParticipantId !== null;
 
-  // All 4 manual scores filled (completion is auto, so not included)
-  const allManualScored = clarity !== null && tone !== null && credibility !== null && closeScore !== null;
-  // All 5 scores including completion
-  const allFiveScored = allManualScored && completionScore !== null;
+  // All 5 manual scores filled (completion is auto, so not included)
+  const allManualScored = contextScore !== null && configurationScore !== null && consequenceScore !== null && credibility !== null && closeScore !== null;
+  // All 6 scores including completion
+  const allSixScored = allManualScored && completionScore !== null;
 
   const sessionComplete = scoreSubmitted && feedbackTimerDone;
 
@@ -220,9 +223,9 @@ export default function ScorecardTab({
 
   // Compute total score for final screen
   const totalScore = useMemo(() => {
-    if (!allFiveScored) return 0;
-    return (clarity ?? 0) + (tone ?? 0) + (credibility ?? 0) + (closeScore ?? 0) + (completionScore ?? 0);
-  }, [clarity, tone, credibility, closeScore, completionScore, allFiveScored]);
+    if (!allSixScored) return 0;
+    return (contextScore ?? 0) + (configurationScore ?? 0) + (consequenceScore ?? 0) + (credibility ?? 0) + (closeScore ?? 0) + (completionScore ?? 0);
+  }, [contextScore, configurationScore, consequenceScore, credibility, closeScore, completionScore, allSixScored]);
 
   // Leaderboard position data for final screen
   const leaderboardPositions = useMemo(() => {
@@ -250,10 +253,10 @@ export default function ScorecardTab({
 
   // Show debrief when all 5 scores are filled OR on submit
   useEffect(() => {
-    if (allFiveScored && !showDebrief) {
+    if (allSixScored && !showDebrief) {
       setShowDebrief(true);
     }
-  }, [allFiveScored, showDebrief]);
+  }, [allSixScored, showDebrief]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -347,14 +350,15 @@ export default function ScorecardTab({
   }, []);
 
   const handleSubmit = useCallback(async () => {
-    if (!clarity || !tone || !credibility || !closeScore || !completionScore) return;
+    if (!contextScore || !configurationScore || !consequenceScore || !credibility || !closeScore || !completionScore) return;
     try {
       if (isManualEntry) {
         await onSubmitManualScore({
           manualName: manualName.trim(),
           manualRole: manualRole,
-          clarity,
-          conversationalTone: tone,
+          contextScore,
+          configuration: configurationScore,
+          consequence: consequenceScore,
           credibility,
           closeScore,
           completion: completionScore,
@@ -363,8 +367,9 @@ export default function ScorecardTab({
       } else if (selectedParticipantId) {
         await onSubmitScore({
           scoredParticipantId: selectedParticipantId,
-          clarity,
-          conversationalTone: tone,
+          contextScore,
+          configuration: configurationScore,
+          consequence: consequenceScore,
           credibility,
           closeScore,
           completion: completionScore,
@@ -376,7 +381,7 @@ export default function ScorecardTab({
     } catch {
       // Error handled by parent toast
     }
-  }, [selectedParticipantId, isManualEntry, manualName, manualRole, clarity, tone, credibility, closeScore, completionScore, feedback, onSubmitScore, onSubmitManualScore]);
+  }, [selectedParticipantId, isManualEntry, manualName, manualRole, contextScore, configurationScore, consequenceScore, credibility, closeScore, completionScore, feedback, onSubmitScore, onSubmitManualScore]);
 
   const handleReset = useCallback(() => {
     setPhase("idle");
@@ -387,8 +392,9 @@ export default function ScorecardTab({
     setManualRole("");
     setDemoSeconds(DEMO_SECONDS);
     setFeedbackSeconds(FEEDBACK_SECONDS);
-    setClarity(null);
-    setTone(null);
+    setContextScore(null);
+    setConfigurationScore(null);
+    setConsequenceScore(null);
     setCredibility(null);
     setCloseScore(null);
     setCompletionScore(null);
@@ -402,8 +408,8 @@ export default function ScorecardTab({
   // SESSION COMPLETE — score summary + position
   // ==========================================
   if (sessionComplete) {
-    // Score color: red (1) → orange → yellow → green (20)
-    const scoreHue = Math.round((totalScore / 20) * 130);
+    // Score color: red (1) → orange → yellow → green (24)
+    const scoreHue = Math.round((totalScore / 24) * 130);
     const scoreColor = `hsl(${scoreHue}, 80%, 42%)`;
     const scoreGradientFrom = `hsl(${Math.max(0, scoreHue - 15)}, 85%, 45%)`;
     const scoreGradientTo = `hsl(${Math.min(130, scoreHue + 15)}, 85%, 38%)`;
@@ -433,10 +439,10 @@ export default function ScorecardTab({
       : "#1a1a1a";
 
     // Achievement badges — additive across categories
-    // Score tier (everyone gets exactly one)
-    const got80 = totalScore >= 16;             // 80%+
-    const got60 = totalScore >= 12 && totalScore <= 15; // 60-79%
-    const gotDebut = totalScore <= 11;          // ≤59%
+    // Score tier (everyone gets exactly one) — max 24
+    const got80 = totalScore >= 20;             // 80%+ of 24
+    const got60 = totalScore >= 15 && totalScore <= 19; // 60-79%
+    const gotDebut = totalScore <= 14;          // ≤59%
 
     // Role tier
     const gotTop3Role = leaderboardPositions.roleRank <= 3;
@@ -509,7 +515,7 @@ export default function ScorecardTab({
           >
             {totalScore}
           </div>
-          <p className="text-slate-500 text-lg font-semibold">out of 20</p>
+          <p className="text-slate-500 text-lg font-semibold">out of 24</p>
         </div>
 
         <Card className="p-5 border-0 shadow-lg bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-2xl">
@@ -719,7 +725,7 @@ export default function ScorecardTab({
                 >
                   {allManualScored
                     ? "⏹️ Stop Timer — Demo Complete"
-                    : "🔒 Complete all scores above to stop timer"
+                    : "🔒 Complete all 5 scores to stop timer"
                   }
                 </Button>
               </>
@@ -732,7 +738,7 @@ export default function ScorecardTab({
                   </h3>
                   <p className="text-yellow-700 text-sm mt-1">
                     Time&apos;s up on the demo, but your scorecard isn&apos;t complete yet.
-                    Fill in all 4 categories below, then continue to the feedback round.
+                    Fill in all 5 categories below, then continue to the feedback round.
                   </p>
                 </div>
                 <Button
@@ -740,7 +746,7 @@ export default function ScorecardTab({
                   disabled={!allManualScored}
                   className="w-full h-12 font-bold"
                 >
-                  {allManualScored ? "✅ Scores Complete — Start Feedback Timer" : "🔒 Fill in all 4 scores to continue"}
+                  {allManualScored ? "✅ Scores Complete — Start Feedback Timer" : "🔒 Fill in all 5 scores to continue"}
                 </Button>
               </div>
             ) : (
@@ -824,26 +830,32 @@ export default function ScorecardTab({
 
             <div className="space-y-0">
               <ScoreCategory
-                label="Clarity"
-                description="Were they concise and easy to follow?"
-                value={clarity}
-                onChange={scoreSubmitted ? () => {} : setClarity}
+                label="Context"
+                description="Explain the why"
+                value={contextScore}
+                onChange={scoreSubmitted ? () => {} : setContextScore}
               />
               <ScoreCategory
-                label="Conversational Tone"
-                description="Did it feel natural, not scripted?"
-                value={tone}
-                onChange={scoreSubmitted ? () => {} : setTone}
+                label="Configuration"
+                description="Show the agent setup; select a trace"
+                value={configurationScore}
+                onChange={scoreSubmitted ? () => {} : setConfigurationScore}
+              />
+              <ScoreCategory
+                label="Consequence"
+                description="Explain the outcome"
+                value={consequenceScore}
+                onChange={scoreSubmitted ? () => {} : setConsequenceScore}
               />
               <ScoreCategory
                 label="Credibility"
-                description="Did they speak about the product correctly?"
+                description="Sound credible"
                 value={credibility}
                 onChange={scoreSubmitted ? () => {} : setCredibility}
               />
               <ScoreCategory
                 label="Close"
-                description="Did they end with a compelling ask?"
+                description="Close with a value statement"
                 value={closeScore}
                 onChange={scoreSubmitted ? () => {} : setCloseScore}
               />
@@ -921,7 +933,7 @@ export default function ScorecardTab({
             {!scoreSubmitted ? (
               <Button
                 className="w-full mt-4 h-12 text-base font-bold shadow-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl"
-                disabled={!allFiveScored || submitting}
+                disabled={!allSixScored || submitting}
                 onClick={handleSubmit}
               >
                 {submitting ? "Submitting..." : "🚀 Submit Scores"}

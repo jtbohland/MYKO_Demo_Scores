@@ -28,7 +28,7 @@ export default api({
         p.first_name,
         p.last_name,
         p.role,
-        COALESCE(SUM(s.clarity + s.conversational_tone + s.credibility + s.close_score + s.completion), 0) AS total_points,
+        COALESCE(SUM(s.context_score + s.configuration + s.consequence + s.credibility + s.close_score + s.completion), 0) AS total_points,
         COUNT(s.id) AS demo_count
        FROM scorecard_participants p
        LEFT JOIN scorecard_scores s ON s.scored_participant_id = p.id
