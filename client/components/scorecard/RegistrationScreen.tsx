@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { Card } from "@/components/ui/card";
+import AgentAnalyticsLogo from "./AgentAnalyticsLogo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -45,7 +46,7 @@ export default function RegistrationScreen({ onRegister, loading }: Props) {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 mb-5 shadow-lg">
-            <span className="text-4xl">🎯</span>
+            <AgentAnalyticsLogo size={48} />
           </div>
           <h1 className="text-3xl font-extrabold bg-gradient-to-r from-blue-700 to-indigo-600 bg-clip-text text-transparent tracking-tight">
             Agent Analytics Demo

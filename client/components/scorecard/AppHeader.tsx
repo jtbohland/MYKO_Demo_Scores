@@ -1,3 +1,5 @@
+import AgentAnalyticsLogo from "./AgentAnalyticsLogo";
+
 type Props = {
   participantName: string;
   participantRole: string;
@@ -9,7 +11,7 @@ export default function AppHeader({ participantName, participantRole }: Props) {
       <div className="max-w-5xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm">
-            <span className="text-2xl">🎯</span>
+            <AgentAnalyticsLogo size={28} className="brightness-200" />
           </div>
           <div>
             <h1 className="text-xl font-extrabold text-white tracking-tight">
